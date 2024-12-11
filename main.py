@@ -10,7 +10,10 @@ from websockets_proxy import Proxy, proxy_connect
 
 async def connect_to_wss(socks5_proxy, user_id, user_agent):
     device_id = str(uuid.uuid3(uuid.NAMESPACE_DNS, socks5_proxy))
-    logger.info(device_id)
+    logger.info(f"Запуск для {user_id} с прокси {socks5_proxy} и User-Agent {user_agent}")
+
+    points_earned = 0  # Счетчик очков
+
     while True:
         try:
             await asyncio.sleep(random.randint(1, 10) / 10)
@@ -29,9 +32,9 @@ async def connect_to_wss(socks5_proxy, user_id, user_agent):
                     while True:
                         send_message = json.dumps(
                             {"id": str(uuid.uuid4()), "version": "1.0.0", "action": "PING", "data": {}})
-                        logger.debug(send_message)
+                        logger.debug(f"Отправка PING: {send_message}")
                         await websocket.send(send_message)
-                        await asyncio.sleep(20)
+                        await asyncio.sleep(10)
 
                 await asyncio.sleep(1)
                 asyncio.create_task(send_ping())
@@ -39,7 +42,8 @@ async def connect_to_wss(socks5_proxy, user_id, user_agent):
                 while True:
                     response = await websocket.recv()
                     message = json.loads(response)
-                    logger.info(message)
+                    logger.info(f"Получено сообщение: {message}")
+
                     if message.get("action") == "AUTH":
                         auth_response = {
                             "id": message["id"],
@@ -53,37 +57,59 @@ async def connect_to_wss(socks5_proxy, user_id, user_agent):
                                 "version": "2.5.0"
                             }
                         }
-                        logger.debug(auth_response)
+                        logger.debug(f"Отправка AUTH: {auth_response}")
                         await websocket.send(json.dumps(auth_response))
 
                     elif message.get("action") == "PONG":
                         pong_response = {"id": message["id"], "origin_action": "PONG"}
-                        logger.debug(pong_response)
+                        logger.debug(f"Отправка PONG: {pong_response}")
                         await websocket.send(json.dumps(pong_response))
+
+                    # Пример обработки очков (замените на вашу логику)
+                    elif message.get("action") == "POINTS_EARNED":
+                        points_earned += message.get("points", 0)
+                        logger.info(f"Очки заработаны: {points_earned}")
+
         except Exception as e:
-            logger.error(e)
-            logger.error(socks5_proxy)
+            logger.error(f"Ошибка: {e}")
+            logger.error(f"Проблема с прокси: {socks5_proxy}")
 
 
 async def main():
     user_ids = ['2pIv69fJsj7FckViQBpGZA62cQo', '2pIvxieqZpw4jo0XpNXyAEfeQBf', '2pIwd1RZoaQcGtWhL7kSqbXt7yg',
-                '2pIxEyMGhOR41n2PjDFIUtZ8kBV', '2pIxnfgZFIq9vcvTffrkDeIGkYL', '2pIyOw3Wg17C57LPMCuXbMQir7z']  # Добавьте до 100 user_id
+                '2pIxEyMGhOR41n2PjDFIUtZ8kBV', '2pIxnfgZFIq9vcvTffrkDeIGkYL', '2pIyOw3Wg17C57LPMCuXbMQir7z',
+                '2q1x2CrvTppyRMrPMw2QTZwgjQz', '2q1zwOkJF32v5RXHCPkzM8gWeyq', '2q21Vss1Yhcbi5r0WCC3Lwj1mrK',
+                '2q233mJ7uq500wYW92H3Mt5CaG4', '2q28FBrz5ipxgmMIEkrCXnO69xQ', '2q2AG0UqN5n8CNpeMTCLeYZtWxU']
+
     socks5_proxy_list = [
-        'http://L7AaGtfWgMzK:RNW78Fm5@pool.proxy.market:10029',
-        'http://V0KDP7thHMUq:RNW78Fm5@pool.proxy.market:10089',
-        'http://WNPmwYfrvpcN:RNW78Fm5@pool.proxy.market:10047',
-        'http://4bXUISbp31Ct:RNW78Fm5@pool.proxy.market:10055',
-        'http://08MTthJXmNAO:RNW78Fm5@pool.proxy.market:10012',
-        'http://S2ZTQhOtequS:RNW78Fm5@pool.proxy.market:10070',
-        # Добавьте до 100 прокси
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-NbZ0CMm5mgoO-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-jVPwYoYkGvmr-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-uXlNt9Oh9VWd-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-xdOR67wxFs8Z-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-dEGv7T255lct-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-T2MeKOzF6Ify-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-RIL8fGsiO4hV-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-JAgDSdT8ctNr-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-LEHnHOQrIiBE-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-a5kuyEOqfEyF-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-lZAJCFMlJNYs-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        'http://josopbjoimytqqr103387-zone-resi-region-nl-session-nzgar3R8ibAn-sessTime-1440:ugykowwaay@resi-eu.lightningproxies.net:9999',
+        # Добавьте другие прокси
     ]
+
     user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.89 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.71 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.101 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.59 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.100 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.70 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36", # 55
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36", # 54
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36", # 53
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36", # 52
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36", # 51
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36", # 50
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36", # New account
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", # New account
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36", # New account
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36", # New account
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36", # New account
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", # New account
         # Добавьте другие User-Agent для разнообразия
     ]
 
